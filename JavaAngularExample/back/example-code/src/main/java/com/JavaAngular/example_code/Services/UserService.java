@@ -28,4 +28,17 @@ public class UserService {
     public List<User> getUsersByName(String name) {
         return this.userRepository.findByName(name);
     }
+
+    public void addUser(User user) {
+        this.userRepository.save(user);
+    }
+
+    public boolean deleteUser(Long id) {
+        try {
+            this.userRepository.deleteById(id);
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
 }

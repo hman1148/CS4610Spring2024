@@ -6,20 +6,19 @@ import jakarta.persistence.*;
 @Table(name = "users")
 public class User {
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.AUTO)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, columnDefinition = "VARCHAR(255)")
     private String name;
 
-    @Column(nullable = false)
+    @Column(nullable = false, unique = true, columnDefinition = "VARCHAR(255)")
     private String email;
 
     @Column(nullable = false)
     private int age;
 
-    public User(Long id, String name, String email, int age) {
-        this.id = id;
+    public User(String name, String email, int age) {
         this.name = name;
         this.email = email;
         this.age = age;
@@ -27,10 +26,6 @@ public class User {
 
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
     }
 
     public String getName() {

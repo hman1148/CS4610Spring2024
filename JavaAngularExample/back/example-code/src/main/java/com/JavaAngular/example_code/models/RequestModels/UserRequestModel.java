@@ -1,12 +1,12 @@
 package com.JavaAngular.example_code.models.RequestModels;
 
-public class UserRequetModel {
+public class UserRequestModel {
 
     private String name;
     private String email;
     private int age;
 
-    public UserRequetModel(String name, String email, int age) {
+    public UserRequestModel(String name, String email, int age) {
         this.name = name;
         this.email = email;
         this.age = age;
@@ -34,5 +34,9 @@ public class UserRequetModel {
 
     public void setAge(int age) {
         this.age = age;
+    }
+
+    public boolean userHasNullProperties() {
+        return this.name == null || this.email == null || this.age == 0;
     }
 }
