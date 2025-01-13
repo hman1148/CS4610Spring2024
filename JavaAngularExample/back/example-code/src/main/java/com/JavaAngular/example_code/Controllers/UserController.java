@@ -5,9 +5,11 @@ import com.JavaAngular.example_code.models.GenericResponse;
 import com.JavaAngular.example_code.models.RequestModels.UserRequestModel;
 import com.JavaAngular.example_code.models.User;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.swing.text.html.Option;
 import java.util.List;
 import java.util.Optional;
 
@@ -16,8 +18,11 @@ import java.util.Optional;
 public class UserController {
 
     @Autowired
-    private UserService userService;
+    private final UserService userService;
 
+    public UserController(UserService userService) {
+        this.userService = userService;
+    }
     // Get All Users
     @GetMapping("/users")
     public List<User> getAllUsers() {
@@ -54,6 +59,36 @@ public class UserController {
                 "Successfully Added User " + addedUser.getName(), true);
 
         return ResponseEntity.ok(successResponse);
+    }
+
+
+    @PutMapping("/users/{id}")
+    public ResponseEntity<GenericResponse<User>>
+    updateUser(@PathVariable Long id, @RequestBody UserRequestModel updatedUser) {
+        if (updatedUser.userHasNullProperties()) {
+            GenericResponse<User> nullResponse = new GenericResponse<>(null,
+                    "Request has null properties", false);
+            return ResponseEntity.badRequest().body(nullResponse);
+         }
+
+        try {
+            Optional<User> result = this.userService.updateUser(id, updatedUser);
+
+            if (result.isPresent()) {
+                GenericResponse<User> successResponse = new GenericResponse<>(
+                        result.get(), "User updated successfully", true);
+                return ResponseEntity.ok(successResponse);
+            } else {
+                GenericResponse<User> failedResponse = new GenericResponse<>(
+                        null, "User not found with ID: " + id, false);
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(failedResponse);
+            }
+        } catch (Exception e) {
+            GenericResponse<User> exceptionResponse = new GenericResponse<>(
+                    null, "User Service failed to update", false
+            );
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(exceptionResponse);
+        }
     }
 
     @DeleteMapping("/users/{id}")

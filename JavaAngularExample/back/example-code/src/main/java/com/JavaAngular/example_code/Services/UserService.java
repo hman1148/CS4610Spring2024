@@ -1,5 +1,6 @@
 package com.JavaAngular.example_code.Services;
 
+import com.JavaAngular.example_code.models.RequestModels.UserRequestModel;
 import com.JavaAngular.example_code.models.User;
 import com.JavaAngular.example_code.models.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,16 @@ public class UserService {
 
     public void addUser(User user) {
         this.userRepository.save(user);
+    }
+
+    public Optional<User> updateUser(Long id, UserRequestModel updatedUser) {
+        return this.userRepository.findById(id)
+                .map(existingUser -> {
+                    existingUser.setAge(updatedUser.getAge());
+                    existingUser.setName(updatedUser.getName());
+                    existingUser.setEmail(updatedUser.getEmail());
+                    return this.userRepository.save(existingUser);
+                });
     }
 
     public boolean deleteUser(Long id) {
