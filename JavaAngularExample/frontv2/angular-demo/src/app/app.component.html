@@ -25,8 +25,8 @@
 
     <p-button pButton type="button" icon="pi pi-plus" label="Add User" (click)="showAddDialog()"></p-button>
 
-    <p-dialog [(visible)]="state.isDialogVisible" [modal]="true" [closable]="false" header="{{ state.dialogTitle }}">
-      <form [formGroup]="state.userForm" (ngSubmit)="userStore.submit()">
+    <p-dialog [visible]="state.isDialogVisible()" [modal]="true" [closable]="false" header="{{ state.dialogTitle }}">
+      <form [formGroup]="state.userForm()" (ngSubmit)="userStore.submit()">
         <div class="p-fluid">
           <div class="field">
             <label for="name">Name</label>

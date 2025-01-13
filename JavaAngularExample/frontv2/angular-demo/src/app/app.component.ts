@@ -2,7 +2,14 @@ import { Component, inject, OnInit } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { BrowserModule } from '@angular/platform-browser';
-import { FormBuilder, FormsModule, Validators } from '@angular/forms';
+import {
+  FormBuilder,
+  FormGroup,
+  FormGroupDirective,
+  FormsModule,
+  ReactiveFormsModule,
+  Validators,
+} from '@angular/forms';
 
 import { UserStore } from './stores/user.store';
 
@@ -25,6 +32,7 @@ import { User } from './models/user';
     DialogModule,
     ButtonModule,
     InputTextModule,
+    ReactiveFormsModule,
   ],
   templateUrl: './app.component.html',
   styleUrl: './app.component.scss',
@@ -42,10 +50,9 @@ export class AppComponent implements OnInit {
         name: ['', Validators.required],
         email: ['', Validators.required, Validators.email],
         age: [0],
-      }),
+      }) as FormGroup,
     });
   }
-
   showAddDialog(): void {
     patchState(this.state, {
       dialogTitle: 'Add User',
