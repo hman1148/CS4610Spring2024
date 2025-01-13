@@ -25,4 +25,19 @@ export class UserSerivce {
         return this.http.get<GenericResponse<User>>(url);
     }
 
+    createUser(newUser: User): Observable<GenericResponse<User>> {
+      const url: string = `${this.apiUrl}`;
+      return this.http.post<GenericResponse<User>>(url, newUser);
+    }
+
+    updateUser(id: string, updatedUser: User): Observable<GenericResponse<User>> {
+      const url: string = `${this.apiUrl}/${id}`;
+      return this.http.put<GenericResponse<User>>(url, updatedUser);
+    }
+
+    deleteUser(id: string): Observable<GenericResponse<string>> {
+      const url: string = `${this.apiUrl}/${id}`;
+      return this.http.delete<GenericResponse<string>>(url);
+    }
+
 }
