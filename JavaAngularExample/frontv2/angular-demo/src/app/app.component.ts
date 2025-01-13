@@ -84,4 +84,11 @@ export class AppComponent implements OnInit {
       isDialogVisible: false,
     });
   }
+
+  submit(): void {
+    const newUser: User = {
+      ...this.state.userForm()?.value,
+    };
+    this.userStore.addUser(newUser);
+  }
 }

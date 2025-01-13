@@ -1,4 +1,8 @@
-import { setAllEntities, withEntities } from '@ngrx/signals/entities';
+import {
+  addEntity,
+  setAllEntities,
+  withEntities,
+} from '@ngrx/signals/entities';
 import {
   patchState,
   signalStore,
@@ -6,7 +10,7 @@ import {
   withMethods,
   withState,
 } from '@ngrx/signals';
-import { initialStoreState, User } from '../models/user';
+import { initialStoreState, initialUser, User } from '../models/user';
 import { UserSerivce } from '../services/user.service';
 import { inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
@@ -35,8 +39,6 @@ export const UserStore = signalStore(
             isEntitiesLoaded: true,
           });
         }
-
-        const allUsers = store.usersEntities();
         patchState(store, { isLoading: false });
       },
 
@@ -70,10 +72,96 @@ export const UserStore = signalStore(
         });
       },
 
-      updateUser: async (id: string, updatedUser: User) => {},
+      addUser: (user: User) => {
+        patchState(store, { isLoading: true });
 
-      deleteUser: (id: string) => {},
-      submit: () => {},
+        userService.createUser(user).subscribe({
+          next: ({ item, success }) => {
+            if (success && item) {
+              const currentUsers = store.users();
+              currentUsers.push(item);
+              patchState(store, { currentUser: item, users: currentUsers });
+            }
+          },
+          error: ({ message }) => console.error(message),
+          complete: () => patchState(store, { isLoading: false }),
+        });
+      },
+
+      updateUser: (id: string, updatedUser: User) => {
+        patchState(store, { isLoading: true });
+
+        userService.updateUser(id, updatedUser).subscribe({
+          next: ({ item, success }) => {
+            if (success) {
+              patchState(store, {
+                currentUser: item,
+                users: store.users().map((user) => {
+                  if (user.id == item?.id) {
+                    return { ...user, ...item };
+                  } else {
+                    return user;
+                  }
+                }),
+              });
+            }
+          },
+          error: ({ message }) => console.error(message),
+          complete: () => patchState(store, { isLoading: false }),
+        });
+        patchState(store, { isLoading: true });
+
+        userService.updateUser(id, updatedUser).subscribe({
+          next: ({ item, success }) => {
+            if (success) {
+              patchState(store, {
+                currentUser: item,
+                users: store.users().map((user) => {
+                  if (user.id === item?.id) {
+                    return { ...user, ...item };
+                  }
+                  return user;
+                }),
+              });
+
+              messageService.add({
+                severity: 'success',
+                summary: `Updated User: ${updatedUser.name}`,
+              });
+            } else {
+              messageService.add({
+                severity: 'error',
+                detail: 'Failed to Update User',
+              });
+            }
+          },
+          error: ({ message }) => console.error(message),
+          complete: () => patchState(store, { isLoading: false }),
+        });
+      },
+
+      deleteUser: (id: string) => {
+        patchState(store, { isLoading: true });
+
+        userService.deleteUser(id).subscribe({
+          next: ({ success }) => {
+            if (success) {
+              messageService.add({
+                severity: 'success',
+                summary: 'Deleted User',
+              });
+              patchState(store, { currentUser: initialUser() });
+            } else {
+              messageService.add({
+                severity: 'error',
+                summary: 'Failed to delete User',
+              });
+            }
+          },
+          error: ({ message }) => console.error(message),
+          complete: () => patchState(store, { isLoading: false }),
+        });
+      },
     })
   )
 );

@@ -26,7 +26,7 @@
     <p-button pButton type="button" icon="pi pi-plus" label="Add User" (click)="showAddDialog()"></p-button>
 
     <p-dialog [visible]="state.isDialogVisible()" [modal]="true" [closable]="false" header="{{ state.dialogTitle }}">
-      <form [formGroup]="state.userForm()" (ngSubmit)="userStore.submit()">
+      <form [formGroup]="state.userForm()" (ngSubmit)="submit()">
         <div class="p-fluid">
           <div class="field">
             <label for="name">Name</label>
@@ -35,6 +35,10 @@
           <div class="field">
             <label for="email">Email</label>
             <input id="email" type="email" formControlName="email" pInputText />
+          </div>
+          <div class="field">
+            <label for="age">Age</label>
+            <input id="age" type="age" formControlName="age" pInputText />
           </div>
         </div>
         <p-footer>
