@@ -1,6 +1,8 @@
 import {
   addEntity,
+  removeEntity,
   setAllEntities,
+  updateEntity,
   withEntities,
 } from '@ngrx/signals/entities';
 import {
@@ -16,7 +18,7 @@ import { inject } from '@angular/core';
 import { firstValueFrom } from 'rxjs';
 import { MessageService } from 'primeng/api';
 
-const collection: string = 'users';
+const collection = 'users';
 
 export const UserStore = signalStore(
   { providedIn: 'root' },
@@ -29,21 +31,34 @@ export const UserStore = signalStore(
       messageService = inject(MessageService)
     ) => ({
       resolveUsers: async () => {
-        patchState(store, { isLoading: true });
-
-        const { items } = await firstValueFrom(userService.getUsers());
-
-        if (items) {
-          patchState(store, setAllEntities(items, { collection }), {
-            users: items,
-            isEntitiesLoaded: true,
-          });
+        if (store.isEntitiesLoaded()) {
+          return true;
         }
-        patchState(store, { isLoading: false });
+
+        patchState(store, { isLoading: true });
+        try {
+          const { items, success } = await firstValueFrom(
+            userService.getUsers()
+          );
+
+          if (success && items) {
+            patchState(store, setAllEntities(items, { collection }), {
+              isLoading: false,
+              isEntitiesLoaded: true,
+            });
+          }
+        } catch (error) {
+          console.error(error);
+        }
+        return true;
       },
 
-      resolveUser: (user: User) => {
-        patchState(store, { currentUser: user });
+      resolveUser: async (id: number) => {
+        const user = store.usersEntities().find((user) => user.id === id);
+
+        patchState(store, {
+          currentUser: user,
+        });
       },
 
       getUserbyName: async (name: string) => {
@@ -78,9 +93,7 @@ export const UserStore = signalStore(
         userService.createUser(user).subscribe({
           next: ({ item, success }) => {
             if (success && item) {
-              const currentUsers = store.users();
-              currentUsers.push(item);
-              patchState(store, { currentUser: item, users: currentUsers });
+              patchState(store, addEntity(item, { collection }));
             }
           },
           error: ({ message }) => console.error(message),
@@ -93,40 +106,14 @@ export const UserStore = signalStore(
 
         userService.updateUser(id, updatedUser).subscribe({
           next: ({ item, success }) => {
-            if (success) {
-              patchState(store, {
-                currentUser: item,
-                users: store.users().map((user) => {
-                  if (user.id == item?.id) {
-                    return { ...user, ...item };
-                  } else {
-                    return user;
-                  }
-                }),
-              });
-            }
-          },
-          error: ({ message }) => console.error(message),
-          complete: () => patchState(store, { isLoading: false }),
-        });
-        patchState(store, { isLoading: true });
-
-        userService.updateUser(id, updatedUser).subscribe({
-          next: ({ item, success }) => {
-            if (success) {
-              patchState(store, {
-                currentUser: item,
-                users: store.users().map((user) => {
-                  if (user.id === item?.id) {
-                    return { ...user, ...item };
-                  }
-                  return user;
-                }),
-              });
-
+            if (success && item) {
+              patchState(
+                store,
+                updateEntity({ id: item?.id, changes: item }, { collection })
+              );
               messageService.add({
                 severity: 'success',
-                summary: `Updated User: ${updatedUser.name}`,
+                summary: 'Updated User',
               });
             } else {
               messageService.add({
@@ -138,6 +125,7 @@ export const UserStore = signalStore(
           error: ({ message }) => console.error(message),
           complete: () => patchState(store, { isLoading: false }),
         });
+        patchState(store, { isLoading: true });
       },
 
       deleteUser: (id: string) => {
@@ -146,6 +134,7 @@ export const UserStore = signalStore(
         userService.deleteUser(id).subscribe({
           next: ({ success }) => {
             if (success) {
+              patchState(store, removeEntity(id, { collection }));
               messageService.add({
                 severity: 'success',
                 summary: 'Deleted User',

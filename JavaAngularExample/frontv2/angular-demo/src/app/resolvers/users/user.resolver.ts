@@ -1,53 +1,33 @@
-import { ResolveFn, Router } from "@angular/router";
-import { User } from "../../models/user";
-import { inject } from "@angular/core";
+import { ResolveFn, Router } from '@angular/router';
+import { User } from '../../models/user';
+import { inject } from '@angular/core';
 import { UserStore } from '../../stores/user.store';
-import { patchState } from '@ngrx/signals';
 
-export const usersResolver: ResolveFn<Promise<User[]>> = async (...args) => {
-    const userStore = inject(UserStore);
+export const usersResolver: ResolveFn<Promise<boolean>> = async (...args) => {
+  const userStore = inject(UserStore);
 
-    if (userStore.isEntitiesLoaded()) {
-      return userStore.users();
-    }
-
-    try {
-      await userStore.resolveUsers();
-      return userStore.users();
-    } catch (error) {
-        console.error(error);
-        throw error;
-    }
-
-}
+  if (!userStore.isLoading() && userStore.isEntitiesLoaded()) {
+    return true;
+  } else {
+    return userStore.resolveUsers();
+  }
+};
 
 export const userResolver: ResolveFn<Promise<User>> = async (...args) => {
-    const userStore = inject(UserStore);
-    const router = inject(Router);
+  const userStore = inject(UserStore);
+  const router = inject(Router);
 
-    const route = args[0];
-    const userId = route.params['id'];
+  await usersResolver(...args);
+  const [route] = args;
+  const userId = route.params['id'];
 
-    await usersResolver(...args);
+  const isLoaded: boolean = await userStore.resolveUser(userId).then(() => {
+    return userStore.currentUser() ? true : false;
+  });
 
-    if (!userId) {
-        router.navigate(['/'])
-    }
-
-    try {
-      const foundUser = userStore.users().find((user) => user.id === userId);
-
-      if (!foundUser) {
-        console.error("Failed to find user");
-        router.navigate(['/']);
-        throw new Error("Failed to find User");
-      }
-      userStore.resolveUser(foundUser);
-      return foundUser;
-
-    } catch (error) {
-      console.error("Error Resolving user");
-      router.navigate(['/']);
-      throw error;
-    }
-}
+  if (!isLoaded) {
+    // If we couldn't find the current user return
+    router.navigate(['/']);
+  }
+  return userStore.currentUser();
+};
